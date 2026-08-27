@@ -6,6 +6,7 @@ import TugOfWarArena from "./components/TugOfWarArena";
 export default function App() {
   const [screen, setScreen] = useState("welcome");
   const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Data Tim
   const [team1Name, setTeam1Name] = useState("LASKAR BAKUMPAI");
@@ -54,9 +55,53 @@ export default function App() {
   const t1TimerRef = useRef(null);
   const t2TimerRef = useRef(null);
 
+  // =========================================================================
+  // LOGIKA FULLSCREEN KHUSUS IFP
+  // =========================================================================
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      const docElm = document.documentElement;
+      if (docElm.requestFullscreen) {
+        docElm.requestFullscreen().catch(() => {});
+      } else if (docElm.webkitRequestFullscreen) {
+        docElm.webkitRequestFullscreen();
+      } else if (docElm.msRequestFullscreen) {
+        docElm.msRequestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(
+        !!document.fullscreenElement || !!document.webkitFullscreenElement,
+      );
+    };
+    document.addEventListener("fullscreenchange", handleFsChange);
+    document.addEventListener("webkitfullscreenchange", handleFsChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFsChange);
+      document.removeEventListener("webkitfullscreenchange", handleFsChange);
+    };
+  }, []);
+
+  // Toggle Suara & Musik
   const toggleMute = () => {
     sounds.muted = !isMuted;
     setIsMuted(!isMuted);
+    if (!isMuted) {
+      sounds.stopBGM();
+    } else if (screen === "game") {
+      sounds.startBGM();
+    }
   };
 
   const shuffleArray = (array) => {
@@ -90,6 +135,11 @@ export default function App() {
   };
 
   const startGame = () => {
+    // Masuk Fullscreen otomatis saat mulai
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      toggleFullscreen();
+    }
+
     const { t1Pool, t2Pool } = generateQuestions();
 
     setTeam1Questions(t1Pool);
@@ -108,6 +158,7 @@ export default function App() {
     setIsPulling2(false);
 
     setScreen("game");
+    sounds.startBGM(); // Memulai BGM Musik Perang Dayak
   };
 
   // Timer Tim 1
@@ -144,9 +195,10 @@ export default function App() {
     return () => clearInterval(t2TimerRef.current);
   }, [screen, t2Index, t2Finished, t2Feedback]);
 
-  // Evaluasi ketika kedua tim selesai
+  // Selesai Pertandingan
   useEffect(() => {
     if (t1Finished && t2Finished && screen === "game") {
+      sounds.stopBGM();
       sounds.playFanfare();
       setScreen("final");
     }
@@ -188,7 +240,7 @@ export default function App() {
     }
   };
 
-  // Handler Jawaban Tim 1 (Langsung Tarik & Lanjut Sendiri)
+  // Jawaban Tim 1
   const handleAnswerTeam1 = (choice) => {
     if (t1Feedback || t1Finished) return;
     clearInterval(t1TimerRef.current);
@@ -224,7 +276,7 @@ export default function App() {
     });
   };
 
-  // Handler Jawaban Tim 2 (Langsung Tarik & Lanjut Sendiri)
+  // Jawaban Tim 2
   const handleAnswerTeam2 = (choice) => {
     if (t2Feedback || t2Finished) return;
     clearInterval(t2TimerRef.current);
@@ -260,7 +312,7 @@ export default function App() {
     });
   };
 
-  // Tombol Lanjut Cepat Tim 1
+  // Lanjut Soal Tim 1
   const advanceTeam1 = () => {
     const nextIdx = t1Index + 1;
     if (nextIdx >= 20 || nextIdx >= team1Questions.length) {
@@ -272,7 +324,7 @@ export default function App() {
     }
   };
 
-  // Tombol Lanjut Cepat Tim 2
+  // Lanjut Soal Tim 2
   const advanceTeam2 = () => {
     const nextIdx = t2Index + 1;
     if (nextIdx >= 20 || nextIdx >= team2Questions.length) {
@@ -313,8 +365,8 @@ export default function App() {
   const p2Name = team2Members[t2Index % team2Members.length];
 
   return (
-    <div className="w-screen h-screen bg-slate-950 text-slate-100 flex flex-col justify-between select-none font-sans overflow-hidden p-2.5 md:p-4">
-      {/* HEADER */}
+    <div className="w-screen h-screen bg-slate-950 text-slate-100 flex flex-col justify-between select-none font-sans overflow-hidden p-2.5 md:p-3.5">
+      {/* HEADER ATAS LENGKAP DENGAN TOMBOL FULLSCREEN IFP */}
       <header className="flex justify-between items-center bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-1.5 shadow backdrop-blur-md">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black text-base shadow-inner">
@@ -325,17 +377,34 @@ export default function App() {
               TARIK TAMBANG SEJARAH: PANGLIMA BATUR
             </h1>
             <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
-              Mode Cepat Mandiri • Barito Utara IFP Edition
+              Interactive Flat Panel Edition • Barito Utara
             </p>
           </div>
         </div>
 
-        <button
-          onClick={toggleMute}
-          className="px-3 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 rounded-lg text-xs font-bold text-slate-300 transition cursor-pointer"
-        >
-          {isMuted ? "🔇 OFF" : "🔊 ON"}
-        </button>
+        {/* CONTROLS: FULLSCREEN & SOUND */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleFullscreen}
+            className={`px-3 py-1 border rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1.5 active:scale-95 shadow ${
+              isFullscreen
+                ? "bg-amber-500/20 border-amber-400 text-amber-300"
+                : "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200"
+            }`}
+            title="Tekan untuk beralih mode Layar Penuh"
+          >
+            <span>
+              {isFullscreen ? "⛶ KELUAR FULLSCREEN" : "⛶ LAYAR PENUH"}
+            </span>
+          </button>
+
+          <button
+            onClick={toggleMute}
+            className="px-3 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 rounded-lg text-xs font-bold text-slate-300 transition cursor-pointer"
+          >
+            {isMuted ? "🔇 OFF" : "🔊 ON"}
+          </button>
+        </div>
       </header>
 
       {/* SCREEN 1: WELCOME */}
@@ -343,7 +412,7 @@ export default function App() {
         <main className="flex-1 flex flex-col items-center justify-center text-center my-auto">
           <div className="max-w-4xl bg-slate-900/90 border-2 border-amber-500/30 p-8 md:p-12 rounded-3xl shadow-2xl backdrop-blur-xl">
             <div className="inline-block px-4 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-widest mb-4">
-              ⚡ Tarik Tambang Cepat & Tanpa Menunggu
+              ⚔️ Tarik Tambang Sejarah Dayak Bakumpai • IFP Ready
             </div>
 
             <h2 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-500 tracking-tight leading-tight mb-4">
@@ -353,13 +422,15 @@ export default function App() {
             </h2>
 
             <p className="text-sm md:text-lg text-slate-300 font-medium max-w-2xl mx-auto mb-8 leading-relaxed">
-              Jawab soal sejarah Barito Utara dengan benar dan cepat untuk
-              langsung menarik tali ke arah tim Anda tanpa harus menunggu tim
-              lawan!
+              Jawab soal sejarah Barito Utara secara serentak di layar sentuh
+              IFP. Tarik tali sekuat tenaga dan raih kemenangan tim!
             </p>
 
             <button
-              onClick={() => setScreen("setup")}
+              onClick={() => {
+                toggleFullscreen(); // Memicu fullscreen otomatis
+                setScreen("setup");
+              }}
               className="px-10 py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xl rounded-2xl shadow-xl shadow-amber-500/20 active:scale-95 transition cursor-pointer border-b-4 border-amber-700"
             >
               MASUK KE PERMAINAN ➔
@@ -508,10 +579,9 @@ export default function App() {
         </main>
       )}
 
-      {/* SCREEN 3: GAMEPLAY (SPLIT-SCREEN ASYNCHRONOUS) */}
+      {/* SCREEN 3: GAMEPLAY */}
       {screen === "game" && (
-        <main className="flex-1 flex flex-col justify-between my-1 max-w-7xl mx-auto w-full">
-          {/* ARENA TARIK TAMBANG REAL-TIME */}
+        <main className="flex-1 flex flex-col justify-between my-0.5 max-w-7xl mx-auto w-full">
           <TugOfWarArena
             team1Name={team1Name}
             team2Name={team2Name}
@@ -521,14 +591,10 @@ export default function App() {
             isPulling2={isPulling2}
           />
 
-          {/* DUAL RACE COLUMNS */}
           <div className="grid grid-cols-2 gap-3 flex-1">
-            {/* ========================================= */}
             {/* SISI KIRI (TIM 1) */}
-            {/* ========================================= */}
             <div className="flex flex-col justify-between bg-slate-900/95 border-2 border-amber-500/40 rounded-2xl p-3 shadow-xl relative overflow-hidden">
-              {/* Header Sisi Tim 1 */}
-              <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+              <div className="flex justify-between items-center pb-1.5 border-b border-slate-800">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-black text-amber-400 uppercase">
                     {team1Name}
@@ -557,7 +623,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Status Selesai Tim 1 */}
               {t1Finished ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
                   <span className="text-4xl mb-2">🏁</span>
@@ -569,10 +634,9 @@ export default function App() {
                   </p>
                 </div>
               ) : t1Feedback ? (
-                /* Feedback Instan Tim 1 */
-                <div className="flex-1 flex flex-col justify-between p-3 bg-slate-950/90 rounded-xl border border-slate-800 my-2">
+                <div className="flex-1 flex flex-col justify-between p-3 bg-slate-950/90 rounded-xl border border-slate-800 my-1.5">
                   <div>
-                    <div className="flex justify-between items-center mb-2">
+                    <div className="flex justify-between items-center mb-1.5">
                       <span
                         className={`text-xs font-black px-2.5 py-0.5 rounded-full ${
                           t1Feedback.isCorrect
@@ -598,15 +662,14 @@ export default function App() {
 
                   <button
                     onClick={advanceTeam1}
-                    className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition cursor-pointer mt-2"
+                    className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition cursor-pointer mt-1"
                   >
                     SOAL BERIKUTNYA ➔
                   </button>
                 </div>
               ) : currentQ1 ? (
-                /* Soal & Pilihan Jawaban Tim 1 */
                 <>
-                  <div className="flex-1 flex items-center justify-center my-2 bg-slate-950/70 rounded-xl p-3 border border-slate-800 text-center">
+                  <div className="flex-1 flex items-center justify-center my-1.5 bg-slate-950/70 rounded-xl p-2.5 border border-slate-800 text-center">
                     <p className="text-xs md:text-sm font-extrabold text-slate-100 leading-snug">
                       {currentQ1.question}
                     </p>
@@ -630,7 +693,7 @@ export default function App() {
                       ))}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-2 h-28 md:h-32 items-center">
+                    <div className="grid grid-cols-2 gap-2 h-24 md:h-28 items-center">
                       <button
                         onClick={() => handleAnswerTeam1(true)}
                         className="h-full bg-gradient-to-br from-emerald-600 to-teal-700 hover:from-emerald-500 active:scale-95 rounded-xl border-2 border-emerald-400 flex flex-col items-center justify-center gap-0.5 text-white font-black text-base transition cursor-pointer"
@@ -655,12 +718,9 @@ export default function App() {
               ) : null}
             </div>
 
-            {/* ========================================= */}
             {/* SISI KANAN (TIM 2) */}
-            {/* ========================================= */}
             <div className="flex flex-col justify-between bg-slate-900/95 border-2 border-emerald-500/40 rounded-2xl p-3 shadow-xl relative overflow-hidden">
-              {/* Header Sisi Tim 2 */}
-              <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+              <div className="flex justify-between items-center pb-1.5 border-b border-slate-800">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-black text-emerald-400 uppercase">
                     {team2Name}
@@ -689,7 +749,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Status Selesai Tim 2 */}
               {t2Finished ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
                   <span className="text-4xl mb-2">🏁</span>
@@ -701,10 +760,9 @@ export default function App() {
                   </p>
                 </div>
               ) : t2Feedback ? (
-                /* Feedback Instan Tim 2 */
-                <div className="flex-1 flex flex-col justify-between p-3 bg-slate-950/90 rounded-xl border border-slate-800 my-2">
+                <div className="flex-1 flex flex-col justify-between p-3 bg-slate-950/90 rounded-xl border border-slate-800 my-1.5">
                   <div>
-                    <div className="flex justify-between items-center mb-2">
+                    <div className="flex justify-between items-center mb-1.5">
                       <span
                         className={`text-xs font-black px-2.5 py-0.5 rounded-full ${
                           t2Feedback.isCorrect
@@ -730,15 +788,14 @@ export default function App() {
 
                   <button
                     onClick={advanceTeam2}
-                    className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition cursor-pointer mt-2"
+                    className="w-full py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition cursor-pointer mt-1"
                   >
                     SOAL BERIKUTNYA ➔
                   </button>
                 </div>
               ) : currentQ2 ? (
-                /* Soal & Pilihan Jawaban Tim 2 */
                 <>
-                  <div className="flex-1 flex items-center justify-center my-2 bg-slate-950/70 rounded-xl p-3 border border-slate-800 text-center">
+                  <div className="flex-1 flex items-center justify-center my-1.5 bg-slate-950/70 rounded-xl p-2.5 border border-slate-800 text-center">
                     <p className="text-xs md:text-sm font-extrabold text-slate-100 leading-snug">
                       {currentQ2.question}
                     </p>
@@ -762,7 +819,7 @@ export default function App() {
                       ))}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-2 h-28 md:h-32 items-center">
+                    <div className="grid grid-cols-2 gap-2 h-24 md:h-28 items-center">
                       <button
                         onClick={() => handleAnswerTeam2(true)}
                         className="h-full bg-gradient-to-br from-emerald-600 to-teal-700 hover:from-emerald-500 active:scale-95 rounded-xl border-2 border-emerald-400 flex flex-col items-center justify-center gap-0.5 text-white font-black text-base transition cursor-pointer"
