@@ -1,214 +1,43 @@
 import React from "react";
 
-function RealisticDayakWarrior({
-  theme = "amber",
-  isPulling = false,
-  isWinning = false,
-  isLosing = false,
-}) {
-  const isLeft = theme === "amber";
-
-  const vestColor1 = isLeft ? "#b45309" : "#047857";
-  const vestColor2 = isLeft ? "#78350f" : "#064e3b";
-  const accentColor = isLeft ? "#f59e0b" : "#10b981";
-  const headbandColor = isLeft ? "#dc2626" : "#d97706";
-  const skinTone = "#d49b6a";
-  const skinShadow = "#b27848";
-
-  let pullRotation =
-    isPulling || isWinning ? (isLeft ? -14 : 14) : isLeft ? -6 : 6;
-  if (isLosing) pullRotation = isLeft ? 10 : -10;
+// =========================================================================
+// 1. KOMPONEN PEJUANG (GAMBAR AI + MIRROR KHUSUS TIM KANAN)
+// =========================================================================
+function WarriorDisplay({ isLeft, isPulling, isWinning, isLosing }) {
+  const leanAngle = isPulling || isWinning ? -14 : isLosing ? 10 : -5;
 
   return (
     <div
-      className={`relative transition-all duration-300 flex flex-col items-center ${
-        isPulling ? "scale-110" : ""
-      } ${isWinning ? "scale-105" : ""} ${isLosing ? "opacity-80 scale-95" : ""}`}
+      className={`relative transition-all duration-300 flex flex-col items-center select-none ${
+        isPulling
+          ? "scale-110 -translate-y-1"
+          : isWinning
+            ? "scale-105"
+            : isLosing
+              ? "opacity-80 scale-95"
+              : ""
+      }`}
     >
-      <svg
-        className={`w-24 h-32 md:w-32 md:h-40 filter drop-shadow-2xl ${!isLeft ? "scale-x-[-1]" : ""}`}
-        viewBox="0 0 160 200"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
+      {/* Wrapper Gambar: Tim Kiri normal, Tim Kanan otomatis scaleX(-1) menghadap ke tali */}
+      <div
+        style={{
+          transform: isLeft ? "none" : "scaleX(-1)",
+          display: "inline-block",
+        }}
       >
-        <g transform={`rotate(${pullRotation} 80 160)`}>
-          <ellipse cx="80" cy="195" rx="45" ry="8" fill="rgba(0,0,0,0.4)" />
+        <img
+          src={isLeft ? "/karakter-kiri.png" : "/karakter-kanan.png"}
+          alt={isLeft ? "Pejuang Tim 1" : "Pejuang Tim 2"}
+          style={{
+            transform: `rotate(${leanAngle}deg)`,
+            transformOrigin: "bottom center",
+            transition: "transform 0.3s ease",
+          }}
+          className="w-28 h-36 md:w-36 md:h-44 object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] pointer-events-none"
+        />
+      </div>
 
-          {/* KAKI BELAKANG */}
-          <path
-            d="M45 140 L30 170 L15 190"
-            stroke={skinShadow}
-            strokeWidth="16"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <rect
-            x="18"
-            y="178"
-            width="14"
-            height="6"
-            rx="2"
-            fill={accentColor}
-            transform="rotate(35 18 178)"
-          />
-          <path d="M12 188 L32 192 L10 196 Z" fill="#451a03" />
-
-          {/* KAKI DEPAN */}
-          <path
-            d="M75 140 L95 168 L115 192"
-            stroke={skinTone}
-            strokeWidth="18"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <rect
-            x="98"
-            y="174"
-            width="15"
-            height="6"
-            rx="2"
-            fill={accentColor}
-            transform="rotate(-40 98 174)"
-          />
-          <path d="M108 190 L135 192 L110 198 Z" fill="#451a03" />
-
-          {/* CAWAT */}
-          <path d="M42 125 L90 125 L82 155 L48 155 Z" fill="#1e293b" />
-          <path d="M52 125 L78 125 L74 165 L56 165 Z" fill={headbandColor} />
-
-          {/* TUBUH & ROMPI */}
-          <path d="M45 75 L88 75 L82 130 L48 130 Z" fill={skinTone} />
-          <path
-            d="M65 85 L65 120 M55 100 L75 100 M56 112 L74 112"
-            stroke={skinShadow}
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            opacity="0.6"
-          />
-          <path d="M40 75 L58 75 L52 130 L38 126 Z" fill={vestColor1} />
-          <path d="M92 75 L74 75 L80 130 L94 126 Z" fill={vestColor2} />
-          <path
-            d="M42 85 Q50 95 44 110"
-            stroke={accentColor}
-            strokeWidth="3"
-            fill="none"
-          />
-          <path
-            d="M90 85 Q82 95 88 110"
-            stroke={accentColor}
-            strokeWidth="3"
-            fill="none"
-          />
-
-          {/* KALUNG */}
-          <path
-            d="M52 75 Q65 88 78 75"
-            stroke="#fef08a"
-            strokeWidth="3"
-            fill="none"
-          />
-          <polygon points="65,85 62,94 68,94" fill="#f8fafc" />
-
-          {/* TANGAN KIRI */}
-          <path
-            d="M46 80 L25 105 L60 112"
-            stroke={skinShadow}
-            strokeWidth="14"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <circle
-            cx="36"
-            cy="92"
-            r="4"
-            stroke="#0f172a"
-            strokeWidth="1.5"
-            fill="none"
-          />
-
-          {/* TANGAN KANAN */}
-          <path
-            d="M85 80 L115 100 L80 114"
-            stroke={skinTone}
-            strokeWidth="15"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <rect
-            x="92"
-            y="86"
-            width="7"
-            height="15"
-            rx="2"
-            fill={accentColor}
-            transform="rotate(30 92 86)"
-          />
-          <rect
-            x="75"
-            y="108"
-            width="16"
-            height="12"
-            rx="4"
-            fill={skinShadow}
-          />
-
-          {/* KEPALA & WAJAH */}
-          <rect x="58" y="60" width="16" height="18" fill={skinShadow} rx="3" />
-          <ellipse cx="66" cy="50" r="16" fill={skinTone} />
-          <path
-            d="M54 50 Q66 65 78 50"
-            fill={skinTone}
-            stroke={skinShadow}
-            strokeWidth="2"
-          />
-          <path d="M50 45 Q42 70 45 85 L52 82 Q48 65 54 48 Z" fill="#09090b" />
-
-          <path
-            d="M58 45 L68 47"
-            stroke="#18181b"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <path
-            d="M72 47 L80 45"
-            stroke="#18181b"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <circle cx="65" cy="50" r="2.5" fill="#09090b" />
-          <circle cx="76" cy="50" r="2.5" fill="#09090b" />
-          <path
-            d="M63 57 Q70 63 76 57 Z"
-            fill="#450a0a"
-            stroke="#18181b"
-            strokeWidth="1.5"
-          />
-
-          {/* IKAT KEPALA & BULU ENGGANG */}
-          <path
-            d="M48 42 Q66 32 84 42 L83 34 Q66 26 49 34 Z"
-            fill={headbandColor}
-          />
-          <line
-            x1="50"
-            y1="38"
-            x2="82"
-            y2="38"
-            stroke="#fef08a"
-            strokeWidth="2"
-            strokeDasharray="3 2"
-          />
-          <path
-            d="M52 35 Q35 5 50 2 Q58 10 54 35 Z"
-            fill="#f8fafc"
-            stroke="#334155"
-            strokeWidth="1"
-          />
-          <path d="M45 4 Q50 2 55 4 L53 14 L44 14 Z" fill="#09090b" />
-          <path d="M52 35 L49 4" stroke="#64748b" strokeWidth="1" />
-        </g>
-      </svg>
-
+      {/* Label Status Karakter */}
       <div
         className={`px-2.5 py-0.5 rounded-full text-[10px] md:text-xs font-black uppercase tracking-wider mt-0.5 border shadow ${
           isLeft
@@ -222,6 +51,9 @@ function RealisticDayakWarrior({
   );
 }
 
+// =========================================================================
+// 2. ARENA UTAMA (TALI DIAM, HANYA PITA MERAH YANG BERGESER)
+// =========================================================================
 export default function TugOfWarArena({
   team1Name,
   team2Name,
@@ -230,18 +62,15 @@ export default function TugOfWarArena({
   isPulling1,
   isPulling2,
 }) {
-  // RUMUS TARIKAN TALI:
-  // Tim 1 (KIRI) lebih unggul -> nilai negatif -> geser ke KIRI (translateX negatif)
-  // Tim 2 (KANAN) lebih unggul -> nilai positif -> geser ke KANAN (translateX positif)
+  // Posisi Pita Merah:
+  // - Tim 1 (Kiri) unggul -> ribbonShift bernilai negatif -> geser ke KIRI
+  // - Tim 2 (Kanan) unggul -> ribbonShift bernilai positif -> geser ke KANAN
   const scoreDifference = team2Score - team1Score;
-  const ropeShiftPercent = Math.max(
-    -36,
-    Math.min(36, (scoreDifference / 400) * 36),
-  );
+  const ribbonShift = Math.max(-38, Math.min(38, (scoreDifference / 400) * 38));
 
   return (
     <div className="w-full bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 border-2 border-slate-700/80 rounded-2xl p-2.5 md:p-3 shadow-xl relative overflow-hidden mb-2">
-      {/* Garis Tengah Lapangan */}
+      {/* Garis Batas Tengah Lapangan */}
       <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-1 border-r-2 border-dashed border-amber-500/40 z-0" />
       <div className="absolute bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 bg-slate-950/90 rounded-full border border-amber-500/30 text-[9px] uppercase font-black tracking-widest text-amber-400 z-0">
         GARIS TENGAH
@@ -274,42 +103,52 @@ export default function TugOfWarArena({
         </div>
       </div>
 
-      {/* Arena Tali Tambang */}
+      {/* Arena Tali, Pita & Karakter */}
       <div className="relative h-28 md:h-34 flex items-center justify-between px-4 md:px-12 w-full overflow-hidden">
-        {/* Karakter Kiri (Tim 1) */}
+        {/* Karakter Tim 1 (Kiri) */}
         <div className="z-20">
-          <RealisticDayakWarrior
-            theme="amber"
+          <WarriorDisplay
+            isLeft={true}
             isPulling={isPulling1}
             isWinning={team1Score > team2Score + 50}
             isLosing={team2Score > team1Score + 50}
           />
         </div>
 
-        {/* Tali Tambang Fisika Real-Time */}
-        <div
-          className="absolute left-0 right-0 flex items-center justify-center transition-transform duration-500 ease-out z-10 pointer-events-none"
-          style={{ transform: `translateX(${ropeShiftPercent}%)` }}
-        >
-          <div className="w-[115%] h-4 md:h-5 bg-gradient-to-r from-amber-700 via-amber-600 to-amber-800 rounded-full shadow-2xl border-y-2 border-amber-950 flex items-center justify-center relative">
-            <div className="w-full h-full opacity-35 bg-[repeating-linear-gradient(45deg,#000,#000_6px,#fff_6px,#fff_12px)]" />
+        {/* TALI DIAM (FIXED) SEJAJAR DENGAN TANGAN PEJUANG */}
+        <div className="absolute left-8 right-8 top-[43%] md:top-[44%] -translate-y-1/2 z-10 pointer-events-none flex items-center">
+          <img
+            src="/tali.png"
+            alt="Tali Tambang"
+            className="w-full h-3 md:h-4 object-cover filter drop-shadow-[0_4px_4px_rgba(0,0,0,0.65)]"
+          />
 
-            {/* Pita Merah Penanda Tengah Tali */}
-            <div className="absolute left-1/2 -translate-x-1/2 -top-3.5 bottom-[-14px] flex flex-col items-center justify-center z-20">
-              <div className="w-5 h-7 md:w-6 md:h-9 bg-rose-600 border-2 border-rose-200 rounded-sm shadow-xl flex items-center justify-center">
-                <span className="text-[9px] font-black text-white leading-none">
-                  ▼
-                </span>
-              </div>
-              <div className="w-2 h-3 bg-rose-900 rounded-b" />
+          {/* HANYA SIMPUL PITA MERAH INI YANG BERGESER DINAMIS */}
+          <div
+            className="absolute top-1/2 transition-all duration-500 ease-out z-20 flex flex-col items-center pointer-events-none"
+            style={{
+              left: `calc(50% + ${ribbonShift}%)`,
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            {/* Lilitan Simpul */}
+            <div className="w-3.5 h-4.5 md:w-4 md:h-5 bg-gradient-to-r from-red-900 via-red-600 to-red-900 rounded-sm shadow-md border-t border-red-400 flex items-center justify-center">
+              <span className="text-[7px] font-black text-white leading-none">
+                ▼
+              </span>
+            </div>
+            {/* Ekor Pita Menjuntai */}
+            <div className="flex gap-0.5 -mt-0.5">
+              <div className="w-1.5 h-4 bg-gradient-to-b from-red-600 via-red-800 to-red-950 rounded-b shadow transform -rotate-12 origin-top" />
+              <div className="w-1.5 h-5.5 bg-gradient-to-b from-red-500 via-red-700 to-red-950 rounded-b shadow transform rotate-6 origin-top" />
             </div>
           </div>
         </div>
 
-        {/* Karakter Kanan (Tim 2) */}
+        {/* Karakter Tim 2 (Kanan) */}
         <div className="z-20">
-          <RealisticDayakWarrior
-            theme="emerald"
+          <WarriorDisplay
+            isLeft={false}
             isPulling={isPulling2}
             isWinning={team2Score > team1Score + 50}
             isLosing={team1Score > team2Score + 50}
