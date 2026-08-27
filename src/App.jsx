@@ -55,9 +55,7 @@ export default function App() {
   const t1TimerRef = useRef(null);
   const t2TimerRef = useRef(null);
 
-  // =========================================================================
-  // LOGIKA FULLSCREEN KHUSUS IFP
-  // =========================================================================
+  // Fullscreen Handler
   const toggleFullscreen = () => {
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
       const docElm = document.documentElement;
@@ -104,6 +102,7 @@ export default function App() {
     }
   };
 
+  // Helper Pengacakan Array (Fisher-Yates Shuffle)
   const shuffleArray = (array) => {
     const arr = [...array];
     for (let i = arr.length - 1; i > 0; i--) {
@@ -113,14 +112,26 @@ export default function App() {
     return arr;
   };
 
+  // Setup Soal dengan Pilihan Jawaban yang Diacak
   const generateQuestions = () => {
+    // Fungsi untuk mengacak urutan opsi pilihan ganda A, B, C, D, E
+    const prepareQuestion = (q) => {
+      if (q.type === "multiple-choice" && Array.isArray(q.options)) {
+        return {
+          ...q,
+          options: shuffleArray(q.options), // Pilihan jawaban diacak posisinya
+        };
+      }
+      return { ...q };
+    };
+
     const mcQuestions = questionBank.filter(
       (q) => q.type === "multiple-choice",
     );
     const tfQuestions = questionBank.filter((q) => q.type === "true-false");
 
-    const shuffledMC = shuffleArray(mcQuestions);
-    const shuffledTF = shuffleArray(tfQuestions);
+    const shuffledMC = shuffleArray(mcQuestions).map(prepareQuestion);
+    const shuffledTF = shuffleArray(tfQuestions).map(prepareQuestion);
 
     const t1Pool = shuffleArray([
       ...shuffledMC.slice(0, 10),
@@ -135,7 +146,6 @@ export default function App() {
   };
 
   const startGame = () => {
-    // Masuk Fullscreen otomatis saat mulai
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
       toggleFullscreen();
     }
@@ -158,7 +168,7 @@ export default function App() {
     setIsPulling2(false);
 
     setScreen("game");
-    sounds.startBGM(); // Memulai BGM Musik Perang Dayak
+    sounds.startBGM();
   };
 
   // Timer Tim 1
@@ -366,7 +376,7 @@ export default function App() {
 
   return (
     <div className="w-screen h-screen bg-slate-950 text-slate-100 flex flex-col justify-between select-none font-sans overflow-hidden p-2.5 md:p-3.5">
-      {/* HEADER ATAS LENGKAP DENGAN TOMBOL FULLSCREEN IFP */}
+      {/* HEADER ATAS DENGAN FULLSCREEN & AUDIO TOGGLE */}
       <header className="flex justify-between items-center bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-1.5 shadow backdrop-blur-md">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black text-base shadow-inner">
@@ -382,7 +392,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* CONTROLS: FULLSCREEN & SOUND */}
         <div className="flex items-center gap-2">
           <button
             onClick={toggleFullscreen}
@@ -423,12 +432,12 @@ export default function App() {
 
             <p className="text-sm md:text-lg text-slate-300 font-medium max-w-2xl mx-auto mb-8 leading-relaxed">
               Jawab soal sejarah Barito Utara secara serentak di layar sentuh
-              IFP. Tarik tali sekuat tenaga dan raih kemenangan tim!
+              IFP. Pilihan jawaban diacak di setiap soal!
             </p>
 
             <button
               onClick={() => {
-                toggleFullscreen(); // Memicu fullscreen otomatis
+                toggleFullscreen();
                 setScreen("setup");
               }}
               className="px-10 py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xl rounded-2xl shadow-xl shadow-amber-500/20 active:scale-95 transition cursor-pointer border-b-4 border-amber-700"
